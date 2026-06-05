@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -603,9 +604,27 @@ async function callClaudeNoSearch(prompt, retries = 2) {
 }
 
 function extractJSON(text) {
-  const m = text.match(/```json\s*([\s\S]*?)```/) || text.match(/(\{[\s\S]*\})/s);
-  if (m) { try { return JSON.parse(m[1]); } catch(e) {} }
-  try { return JSON.parse(text); } catch(e) { return null; }
+  if (!text) return null;
+  // Strip markdown fences if present
+  const fenced = text.match(/```(?:json)?\s*([\s\S]*?)```/);
+  if (fenced) { try { return JSON.parse(fenced[1].trim()); } catch(e) {} }
+  // Find the first { and last } — skips any leading prose entirely
+  const start = text.indexOf('{');
+  const end = text.lastIndexOf('}');
+  if (start !== -1 && end > start) {
+    try { return JSON.parse(text.slice(start, end + 1)); } catch(e) {
+      // If that fails, try to find a complete nested object
+      let depth = 0, jsonStart = start, jsonEnd = -1;
+      for (let i = start; i < text.length; i++) {
+        if (text[i] === '{') depth++;
+        else if (text[i] === '}') { depth--; if (depth === 0) { jsonEnd = i; break; } }
+      }
+      if (jsonEnd > jsonStart) {
+        try { return JSON.parse(text.slice(jsonStart, jsonEnd + 1)); } catch(e2) {}
+      }
+    }
+  }
+  try { return JSON.parse(text.trim()); } catch(e) { return null; }
 }
 
 // ─────────────────────────────────────────────
@@ -623,10 +642,11 @@ async function refreshClickSend() {
   document.getElementById('strengths-clicksend').innerHTML = '';
   document.getElementById('sources-clicksend').textContent = '';
 
-  const prompt = `Market analyst task: search G2, Trustpilot, Capterra, Google Reviews, Reddit for genuine customer reviews of ClickSend (clicksend.com), a business messaging platform (SMS, MMS, voice, email, direct mail).
+  const prompt = `Search G2, Trustpilot, Capterra, Google Reviews, Reddit for customer reviews of ClickSend (clicksend.com), a business messaging platform (SMS, MMS, voice, email, direct mail). Collect positive praise AND negative complaints. Identify regional patterns for US, UK, AU, FR, ES.
 
-Respond ONLY with valid JSON, no markdown:
-{"summary":"2-3 sentence market perception overview","strengths":["strength1","strength2","strength3","strength4"],"positives_detail":"3-4 sentences on what customers consistently praise (features, support, pricing, ease of use, API)","negatives_detail":"3-4 sentences on most common complaints and gaps customers report","regions":{"US":"1-2 sentences or null","UK":"1-2 sentences or null","AU":"1-2 sentences or null","FR":"1-2 sentences or null","ES":"1-2 sentences or null"},"positive_quotes":[{"text":"verbatim or close-paraphrase positive quote","source":"G2|Trustpilot|Capterra|Google|Reddit"},{"text":"...","source":"..."}],"negative_quotes":[{"text":"verbatim or close-paraphrase complaint","source":"G2|Trustpilot|Capterra|Google|Reddit"},{"text":"...","source":"..."}],"sources":["G2","Trustpilot"]}`;
+IMPORTANT: Your entire response must be a single JSON object starting with { and ending with }. No text before or after. No explanation. No preamble. Just the JSON.
+
+{"summary":"2-3 sentence overview","strengths":["s1","s2","s3","s4"],"positives_detail":"3-4 sentences on what customers praise","negatives_detail":"3-4 sentences on complaints and gaps","regions":{"US":"1-2 sentences or null","UK":"1-2 sentences or null","AU":"1-2 sentences or null","FR":"1-2 sentences or null","ES":"1-2 sentences or null"},"positive_quotes":[{"text":"quote","source":"G2|Trustpilot|Capterra|Google|Reddit"},{"text":"quote","source":"source"}],"negative_quotes":[{"text":"quote","source":"G2|Trustpilot|Capterra|Google|Reddit"},{"text":"quote","source":"source"}],"sources":["G2","Trustpilot"]}`;
 
   try {
     const raw = await callClaude(prompt);
@@ -636,14 +656,20 @@ Respond ONLY with valid JSON, no markdown:
       renderClickSendTab(parsed);
       document.getElementById('cs-last-updated').textContent = 'Updated ' + new Date().toLocaleString();
     } else {
-      document.getElementById('cs-positives-body').innerHTML = '<span class="error-text">⚠ Could not parse response. Try refreshing.</span>';
+      const preview = raw ? raw.substring(0, 150) + '…' : 'empty response';
+      document.getElementById('cs-positives-body').innerHTML = `<span class="error-text">⚠ Could not parse response. Raw: ${preview}</span>`;
       document.getElementById('cs-negatives-body').innerHTML = '';
     }
   } catch(e) {
-    let display = e.message || 'Search failed.';
-    if (display.includes('rate limit')) display = 'Rate limit hit — will retry on next refresh.';
+    const msg = e.message || 'Unknown error';
+    const isRateLimit = msg.toLowerCase().includes('rate limit') || msg.toLowerCase().includes('exceed');
+    const display = isRateLimit
+      ? 'Rate limit hit — wait 60 seconds and try again.'
+      : `Error: ${msg.length > 120 ? msg.substring(0, 120) + '…' : msg}`;
     document.getElementById('cs-positives-body').innerHTML = `<span class="error-text">⚠ ${display}</span>`;
-    document.getElementById('cs-negatives-body').innerHTML = '';
+    document.getElementById('cs-negatives-body').innerHTML = `<span class="error-text" style="font-size:11px">Check your API key is valid and has web search access.</span>`;
+    document.getElementById('cs-regions-grid').innerHTML = '';
+    document.getElementById('cs-quotes-container').innerHTML = '';
   }
 }
 
@@ -735,12 +761,11 @@ async function refreshOne(name) {
     ? `ClickSend strengths: ${(clicksendData.strengths || []).join(', ')}. ClickSend gaps: ${clicksendData.negatives_detail || 'none noted'}.`
     : 'ClickSend: multi-channel messaging (SMS/MMS/voice/email/direct mail), transparent pricing, strong API, AU/UK/US coverage.';
 
-  const prompt = `Competitive intelligence task for ClickSend. Search Reddit, G2, Trustpilot, Capterra, Google Reviews, StackOverflow for genuine customer complaints and pain points about "${name}" as a business messaging platform.
+  const prompt = `Search Reddit, G2, Trustpilot, Capterra, Google Reviews, StackOverflow for genuine customer complaints about "${name}" as a business messaging platform. ${csContext}
 
-${csContext}
+IMPORTANT: Your entire response must be a single JSON object starting with { and ending with }. No text before or after. No explanation. No preamble. Just the JSON.
 
-Respond ONLY with valid JSON, no markdown:
-{"sentiment":"negative|mixed|positive","summary":"2-3 sentence executive summary of main complaint themes","regions":{"US":"1-2 sentences or null","UK":"1-2 sentences or null","AU":"1-2 sentences or null","FR":"1-2 sentences or null","ES":"1-2 sentences or null"},"quotes":[{"text":"verbatim or close-paraphrase complaint","source":"Reddit|G2|Trustpilot|Google|Capterra|StackOverflow","region":"US|UK|AU|FR|ES|Global"},{"text":"...","source":"...","region":"..."}],"clicksend_opportunity":"1-2 sentences: how ClickSend wins here, referencing its strengths vs this competitor's weaknesses","sources":["Reddit","G2"]}`;
+{"sentiment":"negative|mixed|positive","summary":"2-3 sentence summary of main complaint themes","regions":{"US":"1-2 sentences or null","UK":"1-2 sentences or null","AU":"1-2 sentences or null","FR":"1-2 sentences or null","ES":"1-2 sentences or null"},"quotes":[{"text":"complaint quote","source":"Reddit|G2|Trustpilot|Google|Capterra|StackOverflow","region":"US|UK|AU|FR|ES|Global"},{"text":"quote","source":"source","region":"region"}],"clicksend_opportunity":"1-2 sentences on how ClickSend wins here","sources":["Reddit","G2"]}`;
 
   try {
     const raw = await callClaude(prompt);
@@ -881,13 +906,11 @@ async function updateBanners() {
     `${n}(${cardData[n].sentiment}): ${cardData[n].summary} Opp: ${cardData[n].clicksend_opportunity || ''}`
   ).join('\n');
 
-  const prompt = `SLT briefing for ClickSend. ${csContext}
+  const prompt = `SLT briefing for ClickSend. ${csContext} Competitor data (${count} analysed): ${snippets}
 
-Competitor data (${count} analysed):
-${snippets}
+IMPORTANT: Your entire response must be a single JSON object starting with { and ending with }. No text before or after. No explanation. No preamble. Just the JSON.
 
-Respond ONLY with valid JSON, no markdown:
-{"market_summary":"3-4 sentence summary of dominant market pain points and implications for ClickSend","top_opportunities":["specific opportunity 1 referencing a competitor weakness vs ClickSend strength","opportunity 2","opportunity 3"],"strategic_digest":"3-4 sentence bottom-line recommendation — which weaknesses to exploit, where ClickSend has the edge, what to prioritise"}`;
+{"market_summary":"3-4 sentence summary of dominant market pain points and implications for ClickSend","top_opportunities":["opportunity 1","opportunity 2","opportunity 3"],"strategic_digest":"3-4 sentence bottom-line recommendation"}`;
 
   try {
     const raw = await callClaudeNoSearch(prompt);
