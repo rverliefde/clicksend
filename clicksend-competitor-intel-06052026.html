@@ -1,0 +1,980 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ClickSend · Competitor Intelligence</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #f7f6f3;
+    --surface: #ffffff;
+    --surface-2: #f0efe9;
+    --border: rgba(0,0,0,0.08);
+    --border-med: rgba(0,0,0,0.14);
+    --text-primary: #1a1916;
+    --text-secondary: #6b6860;
+    --text-tertiary: #9e9b93;
+    --accent: #0f5ef7;
+    --accent-bg: #eef3ff;
+    --accent-text: #0a3eb8;
+    --success: #0d7a4e;
+    --success-bg: #edfaf3;
+    --success-text: #0a5c3a;
+    --warning: #92580a;
+    --warning-bg: #fff8ec;
+    --warning-text: #6b4007;
+    --danger: #c42b2b;
+    --danger-bg: #fef0f0;
+    --danger-text: #a02020;
+    --radius: 10px;
+    --radius-sm: 6px;
+    --shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+  }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text-primary);
+    min-height: 100vh;
+    font-size: 14px;
+    line-height: 1.6;
+  }
+
+  /* ── Layout ── */
+  .page { max-width: 1280px; margin: 0 auto; padding: 0 2rem 4rem; }
+
+  /* ── Header ── */
+  .header {
+    padding: 2rem 0 1.5rem;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 2rem;
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 1rem;
+  }
+  .header-left { }
+  .logo-row { display: flex; align-items: center; gap: 10px; margin-bottom: 4px; }
+  .logo-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--accent); }
+  .logo-text { font-size: 12px; font-weight: 500; color: var(--text-tertiary); letter-spacing: 0.08em; text-transform: uppercase; }
+  h1 { font-size: 24px; font-weight: 500; color: var(--text-primary); letter-spacing: -0.3px; }
+  .header-sub { font-size: 13px; color: var(--text-secondary); margin-top: 4px; }
+  .header-right { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .last-updated { font-size: 12px; color: var(--text-tertiary); font-family: 'DM Mono', monospace; }
+
+  /* ── Buttons ── */
+  .btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 8px 16px; font-size: 13px; font-weight: 500;
+    border-radius: var(--radius-sm); cursor: pointer;
+    border: 1px solid var(--border-med);
+    background: var(--surface); color: var(--text-primary);
+    font-family: 'DM Sans', sans-serif;
+    transition: background 0.15s, border-color 0.15s;
+    text-decoration: none;
+  }
+  .btn:hover { background: var(--surface-2); }
+  .btn-accent { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .btn-accent:hover { background: #0a4fd4; border-color: #0a4fd4; }
+  .btn-sm { padding: 5px 10px; font-size: 12px; }
+
+  /* ── API Key Banner ── */
+  .api-banner {
+    background: var(--warning-bg);
+    border: 1px solid rgba(146,88,10,0.2);
+    border-radius: var(--radius);
+    padding: 1rem 1.25rem;
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+  }
+  .api-banner.hidden { display: none; }
+  .api-banner-text { font-size: 13px; color: var(--warning-text); flex: 1; }
+  .api-input-wrap { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .api-input {
+    font-family: 'DM Mono', monospace; font-size: 12px;
+    padding: 7px 12px; border-radius: var(--radius-sm);
+    border: 1px solid var(--border-med); background: var(--surface);
+    color: var(--text-primary); width: 340px; max-width: 100%;
+    outline: none;
+  }
+  .api-input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-bg); }
+
+  /* ── Summary Banners ── */
+  .banner {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.1rem 1.25rem;
+    margin-bottom: 1rem;
+    box-shadow: var(--shadow);
+  }
+  .banner-label {
+    font-size: 10px; font-weight: 600; letter-spacing: 0.1em;
+    text-transform: uppercase; color: var(--text-tertiary);
+    margin-bottom: 6px;
+  }
+  .banner-text { font-size: 14px; color: var(--text-secondary); line-height: 1.7; }
+  .banner-text.loaded { color: var(--text-primary); }
+  .banner.success { background: var(--success-bg); border-color: rgba(13,122,78,0.18); }
+  .banner.success .banner-label { color: var(--success); }
+  .banner.success .banner-text { color: var(--success-text); }
+  .opp-list { list-style: none; display: flex; flex-direction: column; gap: 4px; }
+  .opp-list li::before { content: '→ '; color: var(--success); font-weight: 500; }
+
+  /* ── Controls Row ── */
+  .controls-row {
+    display: flex; align-items: center; gap: 10px;
+    flex-wrap: wrap; margin-bottom: 1.25rem;
+  }
+  .divider { width: 1px; height: 20px; background: var(--border-med); }
+  .filter-label { font-size: 12px; color: var(--text-tertiary); font-weight: 500; }
+  .pill-group { display: flex; gap: 4px; flex-wrap: wrap; }
+  .pill {
+    font-size: 12px; padding: 4px 10px;
+    border-radius: 20px; border: 1px solid var(--border-med);
+    background: transparent; color: var(--text-secondary);
+    cursor: pointer; font-family: 'DM Sans', sans-serif;
+    transition: all 0.15s;
+  }
+  .pill:hover { background: var(--surface-2); }
+  .pill.active { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 500; }
+
+  /* ── Progress ── */
+  .progress-wrap { height: 3px; background: var(--surface-2); border-radius: 2px; margin-bottom: 1.5rem; display: none; }
+  .progress-fill { height: 3px; background: var(--accent); border-radius: 2px; transition: width 0.4s ease; width: 0%; }
+
+  /* ── Tabs ── */
+  .tab-row { display: flex; border-bottom: 1px solid var(--border); margin-bottom: 1.5rem; gap: 0; }
+  .tab-btn {
+    font-size: 13px; font-weight: 500; padding: 10px 18px;
+    border: none; background: transparent; cursor: pointer;
+    color: var(--text-tertiary); border-bottom: 2px solid transparent;
+    margin-bottom: -1px; font-family: 'DM Sans', sans-serif;
+    transition: color 0.15s;
+  }
+  .tab-btn:hover { color: var(--text-secondary); }
+  .tab-btn.active { color: var(--text-primary); border-bottom-color: var(--accent); }
+  .tab-count { font-size: 11px; background: var(--surface-2); border-radius: 10px; padding: 1px 6px; margin-left: 4px; color: var(--text-tertiary); }
+
+  /* ── Competitor Grid ── */
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 10px;
+  }
+
+  .card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 1rem 1.1rem;
+    box-shadow: var(--shadow);
+    transition: border-color 0.2s;
+  }
+  .card:hover { border-color: var(--border-med); }
+  .card-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+  .card-name { font-size: 14px; font-weight: 500; color: var(--text-primary); }
+  .card-right { display: flex; align-items: center; gap: 6px; }
+
+  /* Sentiment badges */
+  .badge { font-size: 10px; font-weight: 600; padding: 2px 8px; border-radius: 20px; letter-spacing: 0.04em; text-transform: uppercase; }
+  .badge-unknown { background: var(--surface-2); color: var(--text-tertiary); }
+  .badge-negative { background: var(--danger-bg); color: var(--danger); }
+  .badge-mixed { background: var(--warning-bg); color: var(--warning); }
+  .badge-positive { background: var(--success-bg); color: var(--success); }
+
+  .card-refresh { background: none; border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 3px 8px; cursor: pointer; font-size: 12px; color: var(--text-tertiary); transition: all 0.15s; font-family: 'DM Sans', sans-serif; }
+  .card-refresh:hover { border-color: var(--border-med); color: var(--text-primary); background: var(--surface-2); }
+
+  .card-body { font-size: 13px; color: var(--text-secondary); line-height: 1.65; min-height: 50px; }
+  .card-body.idle { color: var(--text-tertiary); font-style: italic; }
+
+  .opp-block {
+    margin-top: 10px; padding: 8px 10px;
+    background: var(--success-bg); border-radius: var(--radius-sm);
+    font-size: 12px; color: var(--success-text); line-height: 1.5;
+    border-left: 2px solid var(--success);
+  }
+  .opp-block-label { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.07em; color: var(--success); margin-bottom: 3px; }
+
+  .region-chips { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 10px; }
+  .region-chip {
+    font-size: 10px; padding: 2px 7px; border-radius: 20px;
+    border: 1px solid var(--border); color: var(--text-tertiary);
+    font-family: 'DM Mono', monospace;
+  }
+  .region-chip.has-data { border-color: rgba(15,94,247,0.3); color: var(--accent-text); background: var(--accent-bg); }
+
+  .region-detail {
+    margin-top: 8px; padding: 8px 10px;
+    background: var(--accent-bg); border-radius: var(--radius-sm);
+    font-size: 12px; color: var(--accent-text); line-height: 1.5;
+  }
+
+  .clicksend-label { font-size: 10px; font-weight: 600; color: var(--accent); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 4px; }
+  .clicksend-strengths { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 10px; }
+  .strength-chip { font-size: 11px; padding: 3px 9px; border-radius: 20px; background: var(--accent-bg); color: var(--accent-text); border: 1px solid rgba(15,94,247,0.2); }
+
+  /* ── ClickSend Tab ── */
+  .cs-tab-header { margin-bottom: 1rem; }
+  .cs-tab-meta { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; }
+  .cs-tab-actions { display: flex; align-items: center; gap: 10px; }
+  .cs-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+  @media (max-width: 700px) { .cs-grid { grid-template-columns: 1fr; } }
+  .cs-panel { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.1rem 1.25rem; box-shadow: var(--shadow); }
+  .cs-panel-positive { border-left: 3px solid var(--success); }
+  .cs-panel-negative { border-left: 3px solid var(--warning); }
+  .cs-panel-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 10px; }
+  .cs-panel-positive .cs-panel-label { color: var(--success); }
+  .cs-panel-negative .cs-panel-label { color: var(--warning); }
+  .cs-panel-body { font-size: 13px; color: var(--text-primary); line-height: 1.7; }
+  .cs-regions-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; margin-bottom: 12px; }
+  .cs-region-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 0.9rem 1rem; box-shadow: var(--shadow); }
+  .cs-region-name { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: var(--accent-text); margin-bottom: 6px; }
+  .cs-region-text { font-size: 12px; color: var(--text-secondary); line-height: 1.6; }
+  .cs-region-placeholder { font-size: 13px; color: var(--text-tertiary); font-style: italic; grid-column: 1/-1; }
+  .cs-quotes-section { margin-top: 0.5rem; }
+  .cs-section-label { font-size: 11px; font-weight: 600; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.75rem; }
+  .cs-quote-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1rem 1.25rem; margin-bottom: 8px; box-shadow: var(--shadow); border-left: 3px solid var(--accent); }
+  .cs-quote-meta { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; flex-wrap: wrap; }
+
+  .card.clicksend-card { display: none; } /* hidden — now lives in its own tab */
+
+  /* Spinner */
+  .spinner {
+    display: inline-block; width: 12px; height: 12px;
+    border: 1.5px solid var(--border-med); border-top-color: var(--accent);
+    border-radius: 50%; animation: spin 0.7s linear infinite;
+    vertical-align: middle; margin-right: 6px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ── Quotes Tab ── */
+  .quotes-grid { display: flex; flex-direction: column; gap: 10px; }
+  .quote-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 1.1rem 1.25rem;
+    box-shadow: var(--shadow);
+  }
+  .quote-meta { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; flex-wrap: wrap; }
+  .quote-competitor { font-size: 13px; font-weight: 500; color: var(--text-primary); }
+  .quote-source { font-size: 11px; color: var(--text-tertiary); font-family: 'DM Mono', monospace; }
+  .quote-region-tag {
+    font-size: 10px; padding: 2px 7px; border-radius: 20px;
+    border: 1px solid var(--border-med); color: var(--text-secondary);
+    font-family: 'DM Mono', monospace;
+  }
+  blockquote {
+    border-left: 2px solid var(--border-med); padding-left: 14px;
+    font-size: 14px; color: var(--text-primary); line-height: 1.7;
+    font-style: italic;
+  }
+  .quote-opp {
+    margin-top: 10px; font-size: 12px; color: var(--success-text);
+    display: flex; gap: 6px; align-items: flex-start;
+    padding: 7px 10px; background: var(--success-bg); border-radius: var(--radius-sm);
+    border-left: 2px solid var(--success);
+  }
+  .quote-opp-label { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.07em; color: var(--success); white-space: nowrap; padding-top: 2px; }
+
+  .quotes-empty { padding: 2rem 0; color: var(--text-tertiary); font-style: italic; font-size: 13px; }
+
+  /* ── Bottom banner ── */
+  .bottom-banner { margin-top: 2rem; }
+
+  /* ── Footer ── */
+  footer { margin-top: 3rem; padding-top: 1.5rem; border-top: 1px solid var(--border); font-size: 12px; color: var(--text-tertiary); display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px; }
+
+  /* ── Error state ── */
+  .error-text { color: var(--danger); font-size: 12px; }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- Header -->
+  <header class="header">
+    <div class="header-left">
+      <div class="logo-row">
+        <div class="logo-dot"></div>
+        <span class="logo-text">ClickSend · Internal</span>
+      </div>
+      <h1>Competitor Intelligence</h1>
+      <p class="header-sub">AI-powered complaint monitoring · Reddit, G2, Google Reviews, Trustpilot, StackOverflow</p>
+    </div>
+    <div class="header-right">
+      <span class="last-updated" id="last-updated"></span>
+      <button class="btn btn-accent" onclick="refreshAll()" id="refresh-all-btn">↻ Refresh all (20) ~3-4 min</button>
+    </div>
+  </header>
+
+  <!-- API Key Banner -->
+  <div class="api-banner" id="api-banner">
+    <div class="api-banner-text">⚠ Drop your Anthropic API key to activate live search. It's stored in your browser only — never sent anywhere except the Anthropic API.</div>
+    <div class="api-input-wrap">
+      <input class="api-input" type="password" id="api-key-input" placeholder="sk-ant-api03-..." oninput="handleApiKeyInput(this.value)" />
+      <button class="btn btn-sm" onclick="saveApiKey()">Save</button>
+    </div>
+  </div>
+
+  <!-- Strategic Digest (top) -->
+  <div class="banner" id="strategic-digest-banner">
+    <div class="banner-label">Strategic digest · Bottom line for SLT</div>
+    <div class="banner-text" id="strategic-digest-text">Complete the analysis below to generate a strategic digest.</div>
+  </div>
+
+  <!-- Market Summary -->
+  <div class="banner" id="market-summary-banner">
+    <div class="banner-label">Market summary</div>
+    <div class="banner-text" id="market-summary-text">Analyse competitors to generate a market-wide summary for the leadership team.</div>
+  </div>
+
+  <!-- Positioning Opportunities -->
+  <div class="banner success" id="opps-banner" style="display:none">
+    <div class="banner-label">↗ ClickSend positioning opportunities</div>
+    <ul class="opp-list banner-text loaded" id="opps-text"></ul>
+  </div>
+
+  <!-- Controls -->
+  <div class="controls-row">
+    <span class="filter-label">Region</span>
+    <div class="pill-group" id="region-pills">
+      <button class="pill active" onclick="setRegion('all', this)">All</button>
+      <button class="pill" onclick="setRegion('US', this)">US</button>
+      <button class="pill" onclick="setRegion('UK', this)">UK</button>
+      <button class="pill" onclick="setRegion('AU', this)">AU</button>
+      <button class="pill" onclick="setRegion('FR', this)">FR</button>
+      <button class="pill" onclick="setRegion('ES', this)">ES</button>
+    </div>
+  </div>
+
+  <!-- Progress -->
+  <div class="progress-wrap" id="progress-wrap">
+    <div class="progress-fill" id="progress-fill"></div>
+  </div>
+  <div id="progress-label" style="font-size:12px;color:var(--text-tertiary);margin-bottom:1rem;display:none;font-family:'DM Mono',monospace;"></div>
+
+  <!-- Tabs -->
+  <div class="tab-row">
+    <button class="tab-btn active" id="tab-btn-clicksend" onclick="showTab('clicksend', this)">ClickSend</button>
+    <button class="tab-btn" onclick="showTab('summaries', this)">Competitor summaries</button>
+    <button class="tab-btn" onclick="showTab('quotes', this)">Top quotes <span class="tab-count" id="quotes-count">0</span></button>
+  </div>
+
+  <!-- ClickSend Tab -->
+  <div id="tab-clicksend">
+    <div class="cs-tab-header">
+      <div class="cs-tab-meta">
+        <div class="clicksend-label">Your product · Baseline analysis</div>
+        <div class="cs-tab-actions">
+          <span class="last-updated" id="cs-last-updated"></span>
+          <button class="btn btn-sm" onclick="refreshClickSend()">↻ Refresh ClickSend</button>
+        </div>
+      </div>
+    </div>
+    <div class="cs-grid">
+      <!-- Positives -->
+      <div class="cs-panel cs-panel-positive">
+        <div class="cs-panel-label">✓ What customers love</div>
+        <div id="cs-positives-body" class="cs-panel-body idle-text">Refresh ClickSend to populate.</div>
+        <div class="clicksend-strengths" id="strengths-clicksend"></div>
+      </div>
+      <!-- Negatives -->
+      <div class="cs-panel cs-panel-negative">
+        <div class="cs-panel-label">⚠ Complaints &amp; gaps</div>
+        <div id="cs-negatives-body" class="cs-panel-body idle-text">Refresh ClickSend to populate.</div>
+      </div>
+    </div>
+    <!-- Regional breakdown -->
+    <div class="cs-regions-grid" id="cs-regions-grid">
+      <div class="cs-region-placeholder idle-text">Regional breakdown will appear after refresh.</div>
+    </div>
+    <!-- ClickSend quotes -->
+    <div class="cs-quotes-section">
+      <div class="cs-section-label">Customer voices</div>
+      <div id="cs-quotes-container" class="quotes-grid">
+        <p class="quotes-empty">Refresh ClickSend to populate customer quotes.</p>
+      </div>
+    </div>
+    <div class="card-sources" id="sources-clicksend" style="margin-top:1rem"></div>
+  </div>
+
+  <!-- Summaries Tab -->
+  <div id="tab-summaries" style="display:none">
+    <div class="grid" id="competitor-grid"></div>
+  </div>
+
+  <!-- Quotes Tab -->
+  <div id="tab-quotes" style="display:none">
+    <div class="quotes-grid" id="quotes-container">
+      <p class="quotes-empty">Refresh competitors to populate quotes. At least 3 analysed competitors needed.</p>
+    </div>
+  </div>
+
+  <footer>
+    <span>ClickSend Competitor Intelligence · Internal use only</span>
+    <span>Powered by Anthropic Claude + Web Search</span>
+  </footer>
+
+</div>
+
+<script>
+// ─────────────────────────────────────────────
+// CONFIG — paste your API key here OR enter it in the UI above
+// ─────────────────────────────────────────────
+const HARDCODED_API_KEY = ''; // optional: 'sk-ant-...'
+
+const COMPETITORS = [
+  'Sinch','Twilio','Telnyx','Bandwidth','Plivo','Bird','TextMagic','Brevo',
+  'SlickText','SimpleTexting','EZ Texting','BulkSMS','VooDooSMS','SMSGlobal',
+  'Klaviyo','ActiveCampaign','Omnisend','Attentive','Salesmsg','Podium'
+];
+const REGIONS = ['US','UK','AU','FR','ES'];
+
+let activeRegion = 'all';
+let cardData = {};
+let clicksendData = null;
+let allQuotes = [];
+let analysedCount = 0;
+let refreshingAll = false;
+
+// ─────────────────────────────────────────────
+// API KEY MANAGEMENT
+// ─────────────────────────────────────────────
+function getApiKey() {
+  if (HARDCODED_API_KEY) return HARDCODED_API_KEY;
+  return localStorage.getItem('cs_intel_api_key') || '';
+}
+
+function handleApiKeyInput(val) {
+  if (val.startsWith('sk-ant')) {
+    document.getElementById('api-banner').classList.add('hidden');
+    localStorage.setItem('cs_intel_api_key', val);
+  }
+}
+
+function saveApiKey() {
+  const val = document.getElementById('api-key-input').value.trim();
+  if (val) {
+    localStorage.setItem('cs_intel_api_key', val);
+    document.getElementById('api-banner').classList.add('hidden');
+  }
+}
+
+function initApiBanner() {
+  if (getApiKey()) {
+    document.getElementById('api-banner').classList.add('hidden');
+  }
+}
+
+// ─────────────────────────────────────────────
+// TABS & REGION
+// ─────────────────────────────────────────────
+function showTab(tab, el) {
+  document.querySelectorAll('.tab-btn').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('tab-clicksend').style.display = tab === 'clicksend' ? 'block' : 'none';
+  document.getElementById('tab-summaries').style.display = tab === 'summaries' ? 'block' : 'none';
+  document.getElementById('tab-quotes').style.display = tab === 'quotes' ? 'block' : 'none';
+  if (tab === 'quotes') renderQuotes();
+}
+
+function setRegion(r, el) {
+  activeRegion = r;
+  document.querySelectorAll('#region-pills .pill').forEach(p => p.classList.remove('active'));
+  el.classList.add('active');
+  Object.keys(cardData).forEach(name => renderCardBody(name, cardData[name]));
+  renderQuotes();
+}
+
+// ─────────────────────────────────────────────
+// GRID INIT
+// ─────────────────────────────────────────────
+function slugify(n) { return n.replace(/\s+/g, '-').replace(/[^a-zA-Z0-9-]/g, '').toLowerCase(); }
+
+function buildGrid() {
+  const grid = document.getElementById('competitor-grid');
+  grid.innerHTML = '';
+  COMPETITORS.forEach(name => {
+    const sl = slugify(name);
+    const div = document.createElement('div');
+    div.className = 'card'; div.id = 'card-' + sl;
+    div.innerHTML = `
+      <div class="card-header">
+        <span class="card-name">${name}</span>
+        <div class="card-right">
+          <span class="badge badge-unknown" id="badge-${sl}">—</span>
+          <button class="card-refresh" onclick="refreshOne('${name}')">↻ Refresh</button>
+        </div>
+      </div>
+      <div class="card-body idle" id="body-${sl}">Click refresh to analyse.</div>
+      <div class="region-chips" id="regions-${sl}"></div>
+      <div class="card-sources" id="sources-${sl}"></div>`;
+    grid.appendChild(div);
+  });
+}
+
+// ─────────────────────────────────────────────
+// API CALL — with web search (for competitor research)
+// ─────────────────────────────────────────────
+async function callClaude(prompt, retries = 2) {
+  const key = getApiKey();
+  if (!key) throw new Error('No API key set. Enter your key in the banner above.');
+
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': key,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
+      body: JSON.stringify({
+        model: 'claude-haiku-4-5-20251001',
+        max_tokens: 1200,
+        tools: [{ type: 'web_search_20250305', name: 'web_search' }],
+        messages: [{ role: 'user', content: prompt }]
+      })
+    });
+
+    if (res.status === 429 && attempt < retries) {
+      await new Promise(r => setTimeout(r, 12000 * (attempt + 1)));
+      continue;
+    }
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      const msg = err.error?.message || `API error ${res.status}`;
+      if (msg.includes('rate limit')) throw new Error('Rate limit hit — will retry on next refresh.');
+      throw new Error(msg);
+    }
+
+    const data = await res.json();
+    return data.content.filter(b => b.type === 'text').map(b => b.text).join('\n');
+  }
+  throw new Error('Rate limit hit — will retry on next refresh.');
+}
+
+// ─────────────────────────────────────────────
+// API CALL — no web search (for synthesis/summaries only)
+// ─────────────────────────────────────────────
+async function callClaudeNoSearch(prompt, retries = 2) {
+  const key = getApiKey();
+  if (!key) throw new Error('No API key set.');
+
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': key,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
+      body: JSON.stringify({
+        model: 'claude-haiku-4-5-20251001',
+        max_tokens: 800,
+        messages: [{ role: 'user', content: prompt }]
+      })
+    });
+
+    if (res.status === 429 && attempt < retries) {
+      await new Promise(r => setTimeout(r, 8000 * (attempt + 1)));
+      continue;
+    }
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error?.message || `API error ${res.status}`);
+    }
+
+    const data = await res.json();
+    return data.content.filter(b => b.type === 'text').map(b => b.text).join('\n');
+  }
+  throw new Error('Summary API call failed after retries.');
+}
+
+function extractJSON(text) {
+  const m = text.match(/```json\s*([\s\S]*?)```/) || text.match(/(\{[\s\S]*\})/s);
+  if (m) { try { return JSON.parse(m[1]); } catch(e) {} }
+  try { return JSON.parse(text); } catch(e) { return null; }
+}
+
+// ─────────────────────────────────────────────
+// REFRESH CLICKSEND BASELINE
+// ─────────────────────────────────────────────
+async function refreshClickSend() {
+  if (!getApiKey()) { alert('Please enter your Anthropic API key.'); return; }
+
+  document.getElementById('cs-positives-body').innerHTML = '<span class="spinner"></span>Searching…';
+  document.getElementById('cs-positives-body').classList.remove('idle-text');
+  document.getElementById('cs-negatives-body').innerHTML = '<span class="spinner"></span>Searching…';
+  document.getElementById('cs-negatives-body').classList.remove('idle-text');
+  document.getElementById('cs-regions-grid').innerHTML = '<div class="cs-region-placeholder"><span class="spinner"></span> Loading regional data…</div>';
+  document.getElementById('cs-quotes-container').innerHTML = '<p class="quotes-empty"><span class="spinner"></span> Loading customer quotes…</p>';
+  document.getElementById('strengths-clicksend').innerHTML = '';
+  document.getElementById('sources-clicksend').textContent = '';
+
+  const prompt = `Market analyst task: search G2, Trustpilot, Capterra, Google Reviews, Reddit for genuine customer reviews of ClickSend (clicksend.com), a business messaging platform (SMS, MMS, voice, email, direct mail).
+
+Respond ONLY with valid JSON, no markdown:
+{"summary":"2-3 sentence market perception overview","strengths":["strength1","strength2","strength3","strength4"],"positives_detail":"3-4 sentences on what customers consistently praise (features, support, pricing, ease of use, API)","negatives_detail":"3-4 sentences on most common complaints and gaps customers report","regions":{"US":"1-2 sentences or null","UK":"1-2 sentences or null","AU":"1-2 sentences or null","FR":"1-2 sentences or null","ES":"1-2 sentences or null"},"positive_quotes":[{"text":"verbatim or close-paraphrase positive quote","source":"G2|Trustpilot|Capterra|Google|Reddit"},{"text":"...","source":"..."}],"negative_quotes":[{"text":"verbatim or close-paraphrase complaint","source":"G2|Trustpilot|Capterra|Google|Reddit"},{"text":"...","source":"..."}],"sources":["G2","Trustpilot"]}`;
+
+  try {
+    const raw = await callClaude(prompt);
+    const parsed = extractJSON(raw);
+    if (parsed) {
+      clicksendData = parsed;
+      renderClickSendTab(parsed);
+      document.getElementById('cs-last-updated').textContent = 'Updated ' + new Date().toLocaleString();
+    } else {
+      document.getElementById('cs-positives-body').innerHTML = '<span class="error-text">⚠ Could not parse response. Try refreshing.</span>';
+      document.getElementById('cs-negatives-body').innerHTML = '';
+    }
+  } catch(e) {
+    let display = e.message || 'Search failed.';
+    if (display.includes('rate limit')) display = 'Rate limit hit — will retry on next refresh.';
+    document.getElementById('cs-positives-body').innerHTML = `<span class="error-text">⚠ ${display}</span>`;
+    document.getElementById('cs-negatives-body').innerHTML = '';
+  }
+}
+
+function renderClickSendTab(data) {
+  // Positives panel
+  const posEl = document.getElementById('cs-positives-body');
+  posEl.className = 'cs-panel-body';
+  posEl.textContent = data.positives_detail || data.summary || '';
+
+  if (data.strengths && data.strengths.length) {
+    document.getElementById('strengths-clicksend').innerHTML =
+      data.strengths.map(s => `<span class="strength-chip">${s}</span>`).join('');
+  }
+
+  // Negatives panel
+  const negEl = document.getElementById('cs-negatives-body');
+  negEl.className = 'cs-panel-body';
+  negEl.textContent = data.negatives_detail || data.weaknesses || 'No significant complaints found.';
+
+  // Regional breakdown
+  const regGrid = document.getElementById('cs-regions-grid');
+  const regionLabels = { US: '🇺🇸 United States', UK: '🇬🇧 United Kingdom', AU: '🇦🇺 Australia', FR: '🇫🇷 France', ES: '🇪🇸 Spain' };
+  if (data.regions) {
+    const cards = REGIONS.map(r => {
+      const text = data.regions[r] && data.regions[r] !== 'null' ? data.regions[r] : 'No specific data found for this region.';
+      const hasData = data.regions[r] && data.regions[r] !== 'null';
+      return `<div class="cs-region-card">
+        <div class="cs-region-name" style="${hasData ? '' : 'color:var(--text-tertiary)'}">${regionLabels[r] || r}</div>
+        <div class="cs-region-text" style="${hasData ? '' : 'color:var(--text-tertiary);font-style:italic'}">${text}</div>
+      </div>`;
+    }).join('');
+    regGrid.innerHTML = cards;
+  }
+
+  // Customer quotes
+  const quotesContainer = document.getElementById('cs-quotes-container');
+  const allCsQuotes = [
+    ...(data.positive_quotes || []).map(q => ({ ...q, type: 'positive' })),
+    ...(data.negative_quotes || []).map(q => ({ ...q, type: 'negative' }))
+  ];
+
+  if (allCsQuotes.length) {
+    quotesContainer.innerHTML = allCsQuotes.map(q => {
+      const borderColor = q.type === 'positive' ? 'var(--success)' : 'var(--warning)';
+      const label = q.type === 'positive' ? '✓ Positive' : '⚠ Complaint';
+      const labelColor = q.type === 'positive' ? 'var(--success)' : 'var(--warning)';
+      const labelBg = q.type === 'positive' ? 'var(--success-bg)' : 'var(--warning-bg)';
+      return `<div class="quote-card" style="border-left:3px solid ${borderColor}">
+        <div class="quote-meta">
+          <span style="font-size:10px;font-weight:600;padding:2px 8px;border-radius:20px;background:${labelBg};color:${labelColor}">${label}</span>
+          <span class="quote-source">${q.source || ''}</span>
+        </div>
+        <blockquote>"${q.text}"</blockquote>
+      </div>`;
+    }).join('');
+  } else {
+    quotesContainer.innerHTML = '<p class="quotes-empty">No customer quotes found.</p>';
+  }
+
+  // Sources
+  const srcEl = document.getElementById('sources-clicksend');
+  srcEl.textContent = data.sources && data.sources.length ? 'Sources: ' + data.sources.join(' · ') : '';
+}
+
+// Keep old renderClickSendCard as alias for setRegion compatibility
+function renderClickSendCard(data) { renderClickSendTab(data); }
+
+// ─────────────────────────────────────────────
+// REFRESH ONE COMPETITOR
+// ─────────────────────────────────────────────
+function setCardLoading(name) {
+  const sl = slugify(name);
+  document.getElementById('body-'+sl).innerHTML = '<span class="spinner"></span>Searching reviews and complaints…';
+  document.getElementById('body-'+sl).className = 'card-body';
+  document.getElementById('badge-'+sl).className = 'badge badge-unknown';
+  document.getElementById('badge-'+sl).textContent = '…';
+  document.getElementById('regions-'+sl).innerHTML = '';
+  document.getElementById('sources-'+sl).textContent = '';
+}
+
+async function refreshOne(name) {
+  if (!getApiKey()) {
+    alert('Please enter your Anthropic API key in the banner at the top of the page.');
+    return;
+  }
+  setCardLoading(name);
+
+  const csContext = clicksendData
+    ? `ClickSend strengths: ${(clicksendData.strengths || []).join(', ')}. ClickSend gaps: ${clicksendData.negatives_detail || 'none noted'}.`
+    : 'ClickSend: multi-channel messaging (SMS/MMS/voice/email/direct mail), transparent pricing, strong API, AU/UK/US coverage.';
+
+  const prompt = `Competitive intelligence task for ClickSend. Search Reddit, G2, Trustpilot, Capterra, Google Reviews, StackOverflow for genuine customer complaints and pain points about "${name}" as a business messaging platform.
+
+${csContext}
+
+Respond ONLY with valid JSON, no markdown:
+{"sentiment":"negative|mixed|positive","summary":"2-3 sentence executive summary of main complaint themes","regions":{"US":"1-2 sentences or null","UK":"1-2 sentences or null","AU":"1-2 sentences or null","FR":"1-2 sentences or null","ES":"1-2 sentences or null"},"quotes":[{"text":"verbatim or close-paraphrase complaint","source":"Reddit|G2|Trustpilot|Google|Capterra|StackOverflow","region":"US|UK|AU|FR|ES|Global"},{"text":"...","source":"...","region":"..."}],"clicksend_opportunity":"1-2 sentences: how ClickSend wins here, referencing its strengths vs this competitor's weaknesses","sources":["Reddit","G2"]}`;
+
+  try {
+    const raw = await callClaude(prompt);
+    const parsed = extractJSON(raw);
+    if (parsed) {
+      cardData[name] = parsed;
+      renderCardBody(name, parsed);
+      if (parsed.quotes && parsed.quotes.length) {
+        // Remove existing quotes for this competitor then re-add
+        allQuotes = allQuotes.filter(q => q.competitor !== name);
+        parsed.quotes.forEach(q => { allQuotes.push({ ...q, competitor: name }); });
+        document.getElementById('quotes-count').textContent = allQuotes.length;
+      }
+      analysedCount++;
+      // Regenerate banners at 3, 6, 9... successful analyses
+      const successCount = Object.keys(cardData).length;
+      if (successCount >= 3 && successCount % 3 === 0) {
+        bannersGenerating = false;
+        updateBanners();
+      }
+    } else {
+      showCardError(name, 'Could not parse API response. Try refreshing.');
+    }
+  } catch(e) {
+    showCardError(name, e.message || 'Search failed.');
+  }
+}
+
+function renderCardBody(name, data) {
+  const sl = slugify(name);
+  const badge = document.getElementById('badge-'+sl);
+  const sentMap = { negative: 'Negative', mixed: 'Mixed', positive: 'Positive' };
+  badge.className = 'badge badge-' + (data.sentiment || 'unknown');
+  badge.textContent = sentMap[data.sentiment] || '?';
+
+  const bodyEl = document.getElementById('body-'+sl);
+  bodyEl.className = 'card-body';
+  let html = `<span>${data.summary || 'No summary available.'}</span>`;
+
+  if (activeRegion !== 'all' && data.regions) {
+    const rd = data.regions[activeRegion];
+    if (rd && rd !== 'null' && rd !== null) {
+      html += `<div class="region-detail"><strong>${activeRegion}:</strong> ${rd}</div>`;
+    } else {
+      html += `<div style="margin-top:8px;font-size:12px;color:var(--text-tertiary);font-style:italic">No ${activeRegion} regional data found.</div>`;
+    }
+  }
+
+  if (data.clicksend_opportunity) {
+    html += `<div class="opp-block"><div class="opp-block-label">↗ ClickSend opportunity</div>${data.clicksend_opportunity}</div>`;
+  }
+
+  bodyEl.innerHTML = html;
+
+  const regEl = document.getElementById('regions-'+sl);
+  if (activeRegion === 'all' && data.regions) {
+    regEl.innerHTML = REGIONS.map(r => {
+      const has = data.regions[r] && data.regions[r] !== 'null' && data.regions[r] !== null;
+      return `<span class="region-chip ${has ? 'has-data' : ''}" title="${has ? (data.regions[r] || '') : 'No data'}">${r.toLowerCase()}</span>`;
+    }).join('');
+  } else {
+    regEl.innerHTML = '';
+  }
+
+  const srcEl = document.getElementById('sources-'+sl);
+  srcEl.textContent = data.sources && data.sources.length ? 'Sources: ' + data.sources.join(' · ') : '';
+}
+
+function showCardError(name, msg) {
+  const sl = slugify(name);
+  // Trim to a short, readable error — API rate limit messages are very long
+  let display = msg || 'Search failed.';
+  if (display.includes('rate limit')) display = 'Rate limit hit — will retry on next refresh.';
+  else if (display.includes('API error')) display = 'API error — check your key and try again.';
+  else if (display.length > 80) display = display.substring(0, 80) + '…';
+  document.getElementById('body-'+sl).innerHTML = `<span class="error-text">⚠ ${display}</span>`;
+  document.getElementById('badge-'+sl).className = 'badge badge-unknown';
+  document.getElementById('badge-'+sl).textContent = '!';
+}
+
+// ─────────────────────────────────────────────
+// QUOTES RENDER
+// ─────────────────────────────────────────────
+function renderQuotes() {
+  const container = document.getElementById('quotes-container');
+  const filtered = activeRegion === 'all'
+    ? allQuotes
+    : allQuotes.filter(q => q.region === activeRegion || q.region === 'Global');
+
+  document.getElementById('quotes-count').textContent = filtered.length;
+
+  if (!filtered.length) {
+    container.innerHTML = '<p class="quotes-empty">No quotes yet. Refresh competitors to populate.</p>';
+    return;
+  }
+
+  const display = filtered.slice(0, 10);
+  container.innerHTML = display.map(q => {
+    const sent = cardData[q.competitor] ? cardData[q.competitor].sentiment : 'unknown';
+    const opp = cardData[q.competitor] ? cardData[q.competitor].clicksend_opportunity : '';
+    return `
+    <div class="quote-card">
+      <div class="quote-meta">
+        <span class="quote-competitor">${q.competitor}</span>
+        <span class="quote-source">${q.source || ''}</span>
+        ${q.region ? `<span class="quote-region-tag">${q.region}</span>` : ''}
+        <span class="badge badge-${sent}" style="font-size:10px">${sent || '?'}</span>
+      </div>
+      <blockquote>"${q.text}"</blockquote>
+      ${opp ? `<div class="quote-opp"><span class="quote-opp-label">↗ CS opp</span><span>${opp}</span></div>` : ''}
+    </div>`;
+  }).join('');
+}
+
+// ─────────────────────────────────────────────
+// BANNERS UPDATE
+// ─────────────────────────────────────────────
+let bannersGenerating = false;
+
+async function updateBanners() {
+  // Only run once enough data, don't double-run
+  const count = Object.keys(cardData).length;
+  if (count < 3 || bannersGenerating) return;
+  bannersGenerating = true;
+
+  const summaryEl = document.getElementById('market-summary-text');
+  const oppsEl = document.getElementById('opps-text');
+  const digestEl = document.getElementById('strategic-digest-text');
+
+  summaryEl.innerHTML = '<span class="spinner"></span>Generating market summary…';
+  digestEl.innerHTML = '<span class="spinner"></span>Generating strategic digest…';
+
+  const csContext = clicksendData
+    ? `ClickSend strengths: ${(clicksendData.strengths || []).join(', ')}. Key gaps: ${clicksendData.negatives_detail || 'none noted'}.`
+    : 'ClickSend: multi-channel messaging, transparent pricing, strong AU/UK/US coverage.';
+
+  const snippets = Object.keys(cardData).map(n =>
+    `${n}(${cardData[n].sentiment}): ${cardData[n].summary} Opp: ${cardData[n].clicksend_opportunity || ''}`
+  ).join('\n');
+
+  const prompt = `SLT briefing for ClickSend. ${csContext}
+
+Competitor data (${count} analysed):
+${snippets}
+
+Respond ONLY with valid JSON, no markdown:
+{"market_summary":"3-4 sentence summary of dominant market pain points and implications for ClickSend","top_opportunities":["specific opportunity 1 referencing a competitor weakness vs ClickSend strength","opportunity 2","opportunity 3"],"strategic_digest":"3-4 sentence bottom-line recommendation — which weaknesses to exploit, where ClickSend has the edge, what to prioritise"}`;
+
+  try {
+    const raw = await callClaudeNoSearch(prompt);
+    const parsed = extractJSON(raw);
+    if (parsed) {
+      summaryEl.textContent = parsed.market_summary || '';
+      summaryEl.classList.add('loaded');
+      if (parsed.top_opportunities && parsed.top_opportunities.length) {
+        oppsEl.innerHTML = parsed.top_opportunities.map(o => `<li>${o}</li>`).join('');
+        document.getElementById('opps-banner').style.display = 'block';
+      }
+      if (parsed.strategic_digest) {
+        digestEl.textContent = parsed.strategic_digest;
+        digestEl.classList.add('loaded');
+      }
+    } else {
+      summaryEl.textContent = 'Could not parse summary — try refreshing more competitors.';
+      digestEl.textContent = '';
+    }
+  } catch(e) {
+    const msg = (e.message || '').toLowerCase();
+    const clean = msg.includes('rate limit') || msg.includes('exceed')
+      ? 'Rate limit hit — wait a minute then try again, or add credits at console.anthropic.com/settings/billing.'
+      : 'Summary generation failed — try refreshing more competitors first.';
+    summaryEl.textContent = clean;
+    digestEl.textContent = '';
+  } finally {
+    bannersGenerating = false;
+  }
+}
+
+// ─────────────────────────────────────────────
+// REFRESH ALL
+// ─────────────────────────────────────────────
+async function refreshAll() {
+  if (refreshingAll) return;
+  if (!getApiKey()) {
+    alert('Please enter your Anthropic API key in the banner at the top of the page.');
+    return;
+  }
+  refreshingAll = true;
+  analysedCount = 0;
+  allQuotes = [];
+  cardData = {};
+
+  const wrap = document.getElementById('progress-wrap');
+  const fill = document.getElementById('progress-fill');
+  const btn = document.getElementById('refresh-all-btn');
+  wrap.style.display = 'block';
+  fill.style.width = '0%';
+  btn.textContent = '↻ Running — est. 3-4 min…';
+  btn.disabled = true;
+  document.getElementById('last-updated').textContent = '';
+
+  const progressLabel = document.getElementById('progress-label');
+  progressLabel.style.display = 'block';
+
+  // Step 1: ClickSend baseline first
+  progressLabel.textContent = 'Step 1 of 2: Analysing ClickSend baseline…';
+  await refreshClickSend();
+  await new Promise(r => setTimeout(r, 8000));
+
+  // Step 2: Competitors sequentially
+  for (let i = 0; i < COMPETITORS.length; i++) {
+    progressLabel.textContent = `Step 2 of 2: Analysing ${i + 1} of ${COMPETITORS.length}: ${COMPETITORS[i]}…`;
+    await refreshOne(COMPETITORS[i]);
+    fill.style.width = Math.round(((i + 1) / COMPETITORS.length) * 100) + '%';
+    await new Promise(r => setTimeout(r, 8000));
+  }
+
+  refreshingAll = false;
+  wrap.style.display = 'none';
+  progressLabel.style.display = 'none';
+  btn.textContent = '↻ Refresh all (20) ~3-4 min';
+  btn.disabled = false;
+  document.getElementById('last-updated').textContent = 'Updated ' + new Date().toLocaleString();
+  renderQuotes();
+  // Final banner update with all data
+  bannersGenerating = false;
+  updateBanners();
+}
+
+// ─────────────────────────────────────────────
+// INIT
+// ─────────────────────────────────────────────
+initApiBanner();
+buildGrid();
+</script>
+</body>
+</html>
